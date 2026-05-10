@@ -1,10 +1,18 @@
 import chromadb
 from sentence_transformers import SentenceTransformer
-pip install pymupdf
+import fitz
+
 
 def cargar_documento(ruta):
-    with open(ruta, "r", encoding = "utf-8") as text:
-        contenido = text.read()
+    if (ruta.endswith(".pdf")):
+        doc = fitz.open(ruta)
+        texto = ""
+        for pagina in doc:
+            texto += pagina.get_text()
+        contenido = texto
+    else:
+        with open(ruta, "r", encoding = "utf-8") as text:
+            contenido = text.read()
     return contenido
 
 def dividir_en_fragmentos(texto, size = 500, solapamiento = 50):
