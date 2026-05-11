@@ -51,5 +51,5 @@ def conversacion_claude():
         if (not fin):
             print(responder(mensaje))
 
-conversacion_claude()
-
+if __name__ == "__main__":
+    conversacion_claude()
