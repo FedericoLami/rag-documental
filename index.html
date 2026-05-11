@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAG Documental — AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f0e8;
+      --surface: #faf7f2;
+      --surface-2: #ede8df;
+      --border: #d4ccc0;
+      --border-2: #c4bbb0;
+      --ink: #1a1714;
+      --ink-2: #5a5248;
+      --ink-3: #9a9088;
+      --accent: #2d5a3d;
+      --accent-light: #e8f0eb;
+      --accent-2: #8b4513;
+      --danger: #8b1a1a;
+      --danger-light: #f5e8e8;
+      --mono: 'DM Mono', monospace;
+      --serif: 'Instrument Serif', serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--mono);
+      font-size: 14px;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    header {
+      padding: 1.5rem 2.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: baseline;
+      gap: 1.5rem;
+      background: var(--surface);
+    }
+
+    .site-title {
+      font-family: var(--serif);
+      font-size: 1.4rem;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+    }
+
+    .site-title em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .site-meta {
+      font-size: 0.7rem;
+      color: var(--ink-3);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .status-indicator {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.7rem;
+      color: var(--ink-3);
+      letter-spacing: 0.08em;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: blink 2s ease-in-out infinite;
+    }
+
+    .status-dot.inactive {
+      background: var(--ink-3);
+      animation: none;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      min-height: calc(100vh - 65px);
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--border);
+      background: var(--surface);
+      padding: 2rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .section-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      margin-bottom: 0.75rem;
+    }
+
+    .drop-zone {
+      border: 1.5px dashed var(--border-2);
+      border-radius: 8px;
+      padding: 2rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--bg);
+    }
+
+    .drop-zone:hover {
+      border-color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    .drop-zone.active {
+      border-color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    .drop-icon {
+      font-size: 1.8rem;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .drop-text {
+      font-size: 0.75rem;
+      color: var(--ink-2);
+      line-height: 1.5;
+    }
+
+    .drop-text span {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .ruta-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--ink);
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      padding: 0.65rem 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .ruta-input:focus {
+      border-color: var(--accent);
+    }
+
+    .ruta-input::placeholder {
+      color: var(--ink-3);
+    }
+
+    .btn-cargar {
+      width: 100%;
+      background: var(--accent);
+      color: #f5f0e8;
+      border: none;
+      border-radius: 6px;
+      padding: 0.7rem 1rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      margin-top: 0.75rem;
+    }
+
+    .btn-cargar:hover { opacity: 0.85; }
+    .btn-cargar:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .doc-loaded {
+      background: var(--accent-light);
+      border: 1px solid rgba(45, 90, 61, 0.2);
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      color: var(--accent);
+      display: none;
+    }
+
+    .doc-loaded.visible { display: block; }
+
+    .doc-name {
+      font-weight: 500;
+      margin-bottom: 0.2rem;
+      word-break: break-all;
+    }
+
+    .doc-meta {
+      font-size: 0.68rem;
+      color: var(--ink-3);
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.68rem;
+      color: var(--ink-3);
+      line-height: 1.7;
+    }
+
+    .main {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2rem 2.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--ink-3);
+      text-align: center;
+      gap: 1rem;
+      padding: 4rem;
+    }
+
+    .empty-title {
+      font-family: var(--serif);
+      font-size: 1.8rem;
+      font-style: italic;
+      color: var(--ink-2);
+    }
+
+    .empty-sub {
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      max-width: 280px;
+      line-height: 1.7;
+    }
+
+    .message {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message-role {
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+    }
+
+    .message.user .message-role { color: var(--accent-2); }
+
+    .message-bubble {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      font-size: 0.85rem;
+      line-height: 1.75;
+      color: var(--ink);
+      max-width: 80%;
+    }
+
+    .message.user .message-bubble {
+      background: var(--surface-2);
+      align-self: flex-end;
+      border-color: var(--border-2);
+    }
+
+    .message.assistant .message-bubble {
+      white-space: pre-wrap;
+    }
+
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      padding: 0.5rem 0;
+    }
+
+    .typing-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--ink-3);
+      animation: typing 1.2s ease-in-out infinite;
+    }
+
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typing {
+      0%, 80%, 100% { transform: scale(0.8); opacity: 0.4; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    .error-msg {
+      font-size: 0.75rem;
+      color: var(--danger);
+      background: var(--danger-light);
+      border: 1px solid rgba(139, 26, 26, 0.15);
+      border-radius: 6px;
+      padding: 0.65rem 1rem;
+    }
+
+    .input-bar {
+      border-top: 1px solid var(--border);
+      padding: 1.25rem 2.5rem;
+      background: var(--surface);
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-end;
+    }
+
+    .input-wrap {
+      flex: 1;
+      position: relative;
+    }
+
+    textarea#pregunta {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--ink);
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      line-height: 1.6;
+      padding: 0.75rem 1rem;
+      resize: none;
+      height: 52px;
+      max-height: 160px;
+      outline: none;
+      transition: border-color 0.2s;
+      overflow: hidden;
+    }
+
+    textarea#pregunta:focus { border-color: var(--accent); }
+    textarea#pregunta::placeholder { color: var(--ink-3); }
+    textarea#pregunta:disabled { opacity: 0.5; }
+
+    .btn-enviar {
+      background: var(--ink);
+      color: var(--bg);
+      border: none;
+      border-radius: 8px;
+      width: 44px;
+      height: 52px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: opacity 0.2s, transform 0.15s;
+      flex-shrink: 0;
+    }
+
+    .btn-enviar:hover { opacity: 0.8; }
+    .btn-enviar:active { transform: scale(0.95); }
+    .btn-enviar:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .input-hint {
+      font-size: 0.65rem;
+      color: var(--ink-3);
+      margin-top: 0.4rem;
+      letter-spacing: 0.05em;
+    }
+
+    .loading-bar {
+      height: 2px;
+      background: var(--border);
+      overflow: hidden;
+    }
+
+    .loading-fill {
+      height: 100%;
+      width: 0;
+      background: var(--accent);
+      transition: width 0.3s;
+    }
+
+    .loading-fill.active {
+      width: 60%;
+      animation: loadSlide 1.5s ease-in-out infinite;
+    }
+
+    @keyframes loadSlide {
+      0% { transform: translateX(-100%); width: 60%; }
+      100% { transform: translateX(200%); width: 60%; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="site-title">RAG <em>Documental</em></div>
+  <div class="site-meta">Claude · ChromaDB · Python</div>
+  <div class="status-indicator">
+    <div class="status-dot inactive" id="statusDot"></div>
+    <span id="statusText">sin documento</span>
+  </div>
+</header>
+
+<div class="loading-bar"><div class="loading-fill" id="loadBar"></div></div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div>
+      <div class="section-label">Documento</div>
+      <div class="ruta-input-wrap">
+        <input
+          type="text"
+          class="ruta-input"
+          id="rutaInput"
+          placeholder="ruta/al/documento.pdf"
+        />
+        <button class="btn-cargar" id="btnCargar" onclick="cargarDocumento()">
+          Cargar documento →
+        </button>
+      </div>
+
+      <div class="doc-loaded" id="docLoaded">
+        <div class="doc-name" id="docName"></div>
+        <div class="doc-meta">listo para consultas</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Cómo usar</div>
+      <div style="font-size:0.72rem; color:var(--ink-2); line-height:1.8;">
+        1. Ingresá la ruta de tu archivo PDF o TXT<br>
+        2. Hacé click en "Cargar documento"<br>
+        3. Esperá la confirmación<br>
+        4. Hacé preguntas sobre el contenido
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      Sistema RAG — Retrieval Augmented Generation.<br>
+      Las respuestas se basan exclusivamente en el contenido del documento cargado.
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="chat-area" id="chatArea">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-title">Cargá un documento</div>
+        <div class="empty-sub">Seleccioná un archivo PDF o TXT para comenzar a hacer preguntas sobre su contenido.</div>
+      </div>
+    </div>
+
+    <div class="input-bar">
+      <div class="input-wrap">
+        <textarea
+          id="pregunta"
+          placeholder="Hacé una pregunta sobre el documento..."
+          disabled
+          rows="1"
+        ></textarea>
+        <div class="input-hint">Enter para enviar · Shift+Enter para nueva línea</div>
+      </div>
+      <button class="btn-enviar" id="btnEnviar" onclick="enviarPregunta()" disabled>↑</button>
+    </div>
+  </main>
+</div>
+
+<script>
+  const API = 'http://127.0.0.1:8000'
+  let documentoCargado = false
+
+  function setLoading(active) {
+    document.getElementById('loadBar').className = active ? 'loading-fill active' : 'loading-fill'
+  }
+
+  async function cargarDocumento() {
+    const ruta = document.getElementById('rutaInput').value.trim()
+    if (!ruta) return
+
+    const btn = document.getElementById('btnCargar')
+    btn.disabled = true
+    btn.textContent = 'Cargando...'
+    setLoading(true)
+
+    try {
+      const res = await fetch(`${API}/cargar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ruta })
+      })
+
+      if (!res.ok) throw new Error(`Error ${res.status}`)
+
+      documentoCargado = true
+      const nombre = ruta.split(/[\\/]/).pop()
+      document.getElementById('docName').textContent = nombre
+      document.getElementById('docLoaded').classList.add('visible')
+      document.getElementById('statusDot').classList.remove('inactive')
+      document.getElementById('statusText').textContent = 'documento cargado'
+      document.getElementById('pregunta').disabled = false
+      document.getElementById('btnEnviar').disabled = false
+      document.getElementById('pregunta').focus()
+
+      const empty = document.getElementById('emptyState')
+      if (empty) empty.remove()
+
+      agregarMensaje('system', `Documento "${nombre}" cargado correctamente. Podés hacer preguntas.`)
+
+    } catch (e) {
+      agregarError('No se pudo cargar el documento. Verificá la ruta y que el servidor esté corriendo.')
+    } finally {
+      btn.disabled = false
+      btn.textContent = 'Cargar documento →'
+      setLoading(false)
+    }
+  }
+
+  async function enviarPregunta() {
+    const input = document.getElementById('pregunta')
+    const pregunta = input.value.trim()
+    if (!pregunta || !documentoCargado) return
+
+    agregarMensaje('user', pregunta)
+    input.value = ''
+    input.style.height = '52px'
+
+    const typing = agregarTyping()
+    document.getElementById('btnEnviar').disabled = true
+    setLoading(true)
+
+    try {
+      const res = await fetch(`${API}/preguntar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mensaje: pregunta })
+      })
+
+      if (!res.ok) throw new Error(`Error ${res.status}`)
+      const texto = await res.json()
+      typing.remove()
+      agregarMensaje('assistant', texto)
+
+    } catch (e) {
+      typing.remove()
+      agregarError('Error al procesar la pregunta. Intentá de nuevo.')
+    } finally {
+      document.getElementById('btnEnviar').disabled = false
+      setLoading(false)
+    }
+  }
+
+  function agregarMensaje(role, texto) {
+    const chat = document.getElementById('chatArea')
+    const div = document.createElement('div')
+    div.className = `message ${role}`
+
+    const label = role === 'user' ? 'vos' : role === 'assistant' ? 'claude' : 'sistema'
+    div.innerHTML = `
+      <div class="message-role">${label}</div>
+      <div class="message-bubble">${texto}</div>
+    `
+    chat.appendChild(div)
+    chat.scrollTop = chat.scrollHeight
+    return div
+  }
+
+  function agregarTyping() {
+    const chat = document.getElementById('chatArea')
+    const div = document.createElement('div')
+    div.className = 'message assistant'
+    div.innerHTML = `
+      <div class="message-role">claude</div>
+      <div class="message-bubble">
+        <div class="typing-indicator">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      </div>
+    `
+    chat.appendChild(div)
+    chat.scrollTop = chat.scrollHeight
+    return div
+  }
+
+  function agregarError(msg) {
+    const chat = document.getElementById('chatArea')
+    const div = document.createElement('div')
+    div.className = 'error-msg'
+    div.textContent = msg
+    chat.appendChild(div)
+    chat.scrollTop = chat.scrollHeight
+  }
+
+  document.getElementById('pregunta').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      enviarPregunta()
+    }
+  })
+
+  document.getElementById('pregunta').addEventListener('input', function() {
+    this.style.height = '52px'
+    this.style.height = Math.min(this.scrollHeight, 160) + 'px'
+  })
+
+  document.getElementById('rutaInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') cargarDocumento()
+  })
+</script>
+</body>
+</html>
