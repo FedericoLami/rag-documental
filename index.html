@@ -31,17 +31,20 @@
       color: var(--ink);
       font-family: var(--mono);
       font-size: 14px;
-      min-height: 100vh;
-      line-height: 1.6;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
     header {
-      padding: 1.5rem 2.5rem;
+      padding: 1.25rem 2.5rem;
       border-bottom: 1px solid var(--border);
       display: flex;
-      align-items: baseline;
+      align-items: center;
       gap: 1.5rem;
       background: var(--surface);
+      flex-shrink: 0;
     }
 
     .site-title {
@@ -91,10 +94,36 @@
       50% { opacity: 0.3; }
     }
 
+    .loading-bar {
+      height: 2px;
+      background: var(--border);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .loading-fill {
+      height: 100%;
+      width: 0;
+      background: var(--accent);
+      transition: width 0.3s;
+    }
+
+    .loading-fill.active {
+      width: 60%;
+      animation: loadSlide 1.5s ease-in-out infinite;
+    }
+
+    @keyframes loadSlide {
+      0% { transform: translateX(-100%); width: 60%; }
+      100% { transform: translateX(200%); width: 60%; }
+    }
+
     .layout {
       display: grid;
       grid-template-columns: 320px 1fr;
-      min-height: calc(100vh - 65px);
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
     }
 
     .sidebar {
@@ -104,6 +133,7 @@
       display: flex;
       flex-direction: column;
       gap: 2rem;
+      overflow-y: auto;
     }
 
     .section-label {
@@ -112,47 +142,6 @@
       text-transform: uppercase;
       color: var(--ink-3);
       margin-bottom: 0.75rem;
-    }
-
-    .drop-zone {
-      border: 1.5px dashed var(--border-2);
-      border-radius: 8px;
-      padding: 2rem 1rem;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s;
-      background: var(--bg);
-    }
-
-    .drop-zone:hover {
-      border-color: var(--accent);
-      background: var(--accent-light);
-    }
-
-    .drop-zone.active {
-      border-color: var(--accent);
-      background: var(--accent-light);
-    }
-
-    .drop-icon {
-      font-size: 1.8rem;
-      margin-bottom: 0.5rem;
-      display: block;
-    }
-
-    .drop-text {
-      font-size: 0.75rem;
-      color: var(--ink-2);
-      line-height: 1.5;
-    }
-
-    .drop-text span {
-      color: var(--accent);
-      font-weight: 500;
-    }
-
-    input[type="file"] {
-      display: none;
     }
 
     .ruta-input {
@@ -168,13 +157,8 @@
       transition: border-color 0.2s;
     }
 
-    .ruta-input:focus {
-      border-color: var(--accent);
-    }
-
-    .ruta-input::placeholder {
-      color: var(--ink-3);
-    }
+    .ruta-input:focus { border-color: var(--accent); }
+    .ruta-input::placeholder { color: var(--ink-3); }
 
     .btn-cargar {
       width: 100%;
@@ -203,6 +187,7 @@
       font-size: 0.75rem;
       color: var(--accent);
       display: none;
+      margin-top: 0.75rem;
     }
 
     .doc-loaded.visible { display: block; }
@@ -230,6 +215,8 @@
     .main {
       display: flex;
       flex-direction: column;
+      overflow: hidden;
+      height: 100%;
     }
 
     .chat-area {
@@ -239,6 +226,8 @@
       display: flex;
       flex-direction: column;
       gap: 1.5rem;
+      scroll-behavior: smooth;
+      min-height: 0;
     }
 
     .empty-state {
@@ -297,16 +286,13 @@
       line-height: 1.75;
       color: var(--ink);
       max-width: 80%;
+      white-space: pre-wrap;
     }
 
     .message.user .message-bubble {
       background: var(--surface-2);
       align-self: flex-end;
       border-color: var(--border-2);
-    }
-
-    .message.assistant .message-bubble {
-      white-space: pre-wrap;
     }
 
     .typing-indicator {
@@ -346,12 +332,12 @@
       background: var(--surface);
       display: flex;
       gap: 0.75rem;
-      align-items: flex-end;
+      align-items: flex-start;
+      flex-shrink: 0;
     }
 
     .input-wrap {
       flex: 1;
-      position: relative;
     }
 
     textarea#pregunta {
@@ -369,12 +355,18 @@
       max-height: 160px;
       outline: none;
       transition: border-color 0.2s;
-      overflow: hidden;
     }
 
     textarea#pregunta:focus { border-color: var(--accent); }
     textarea#pregunta::placeholder { color: var(--ink-3); }
     textarea#pregunta:disabled { opacity: 0.5; }
+
+    .input-hint {
+      font-size: 0.65rem;
+      color: var(--ink-3);
+      margin-top: 0.4rem;
+      letter-spacing: 0.05em;
+    }
 
     .btn-enviar {
       background: var(--ink);
@@ -392,36 +384,6 @@
     .btn-enviar:hover { opacity: 0.8; }
     .btn-enviar:active { transform: scale(0.95); }
     .btn-enviar:disabled { opacity: 0.3; cursor: not-allowed; }
-
-    .input-hint {
-      font-size: 0.65rem;
-      color: var(--ink-3);
-      margin-top: 0.4rem;
-      letter-spacing: 0.05em;
-    }
-
-    .loading-bar {
-      height: 2px;
-      background: var(--border);
-      overflow: hidden;
-    }
-
-    .loading-fill {
-      height: 100%;
-      width: 0;
-      background: var(--accent);
-      transition: width 0.3s;
-    }
-
-    .loading-fill.active {
-      width: 60%;
-      animation: loadSlide 1.5s ease-in-out infinite;
-    }
-
-    @keyframes loadSlide {
-      0% { transform: translateX(-100%); width: 60%; }
-      100% { transform: translateX(200%); width: 60%; }
-    }
   </style>
 </head>
 <body>
@@ -441,18 +403,15 @@
   <aside class="sidebar">
     <div>
       <div class="section-label">Documento</div>
-      <div class="ruta-input-wrap">
-        <input
-          type="text"
-          class="ruta-input"
-          id="rutaInput"
-          placeholder="ruta/al/documento.pdf"
-        />
-        <button class="btn-cargar" id="btnCargar" onclick="cargarDocumento()">
-          Cargar documento →
-        </button>
-      </div>
-
+      <input
+        type="text"
+        class="ruta-input"
+        id="rutaInput"
+        placeholder="ruta/al/documento.pdf"
+      />
+      <button class="btn-cargar" id="btnCargar" onclick="cargarDocumento()">
+        Cargar documento →
+      </button>
       <div class="doc-loaded" id="docLoaded">
         <div class="doc-name" id="docName"></div>
         <div class="doc-meta">listo para consultas</div>
@@ -586,7 +545,6 @@
     const chat = document.getElementById('chatArea')
     const div = document.createElement('div')
     div.className = `message ${role}`
-
     const label = role === 'user' ? 'vos' : role === 'assistant' ? 'claude' : 'sistema'
     div.innerHTML = `
       <div class="message-role">${label}</div>
