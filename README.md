@@ -74,7 +74,7 @@ Recibe la ruta de un documento, lo procesa y lo indexa en ChromaDB.
 **Request:**
 ```json
 {
-  "ruta": "C:/documentos/manual_tecnico.pdf"
+  "ruta": "C:/rag-documental/constitucion_de_la_nacion_argentina.pdf"
 }
 ```
 
@@ -92,13 +92,13 @@ Recibe una pregunta en lenguaje natural y devuelve la respuesta de Claude basada
 **Request:**
 ```json
 {
-  "mensaje": "¿Cuáles son los pasos para administrar el test?"
+  "mensaje": "¿Cuántos años dura el mandato del presidente?"
 }
 ```
 
 **Response:**
 ```
-"Según el documento, los pasos son..."
+"Según el documento (artículo 90), el presidente y el vicepresidente duran en sus funciones cuatro años y pueden ser reelegidos o sucederse recíprocamente por un solo período consecutivo."
 ```
 
 ---
@@ -114,7 +114,7 @@ Recibe una pregunta en lenguaje natural y devuelve la respuesta de Claude basada
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/tu-usuario/rag-documental.git
+git clone https://github.com/FedericoLami/rag-documental.git
 cd rag-documental
 
 # 2. Crear y activar entorno virtual
@@ -136,6 +136,8 @@ uvicorn main:app --reload
 ### Interfaz web
 
 Con el servidor corriendo, abrí `index.html` directamente en el navegador. Ingresá la ruta completa de tu documento PDF o TXT y comenzá a hacer preguntas.
+
+El repositorio incluye como documento de ejemplo la **Constitución de la Nación Argentina** (`constitucion_de_la_nacion_argentina.pdf`, texto oficial de la Ley 24.430), para probar el sistema sin preparar archivos propios.
 
 ### Documentación interactiva de la API
 
